@@ -13,7 +13,7 @@ npm run dev  # http://localhost:3000
 1. **Connect repo to Vercel** (vercel.com) - auto-detects Next.js.
 2. **Set Environment Variable:**
    ```
-   NEXT_PUBLIC_API_URL = https://your-backend-url.vercel.app/api
+   NEXT_PUBLIC_API_URL = https://e-com-webiste-watches.onrender.com/api
    ```
 3. **Deploy:** `git push` → Vercel auto-builds/deploys.
 
@@ -33,6 +33,7 @@ public/       # Static assets
 
 ## Backend Integration
 - API calls via `/lib/api.ts` use `NEXT_PUBLIC_API_URL`.
+- Backend: https://e-com-webiste-watches.onrender.com
 - Update `.env.local` for local dev (gitignored).
 
 ## Vercel Config

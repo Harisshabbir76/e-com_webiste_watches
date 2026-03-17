@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-    "destination": "$VERCEL_URL/api/:path*"
+      "destination": "https://e-com-webiste-watches.onrender.com/api/:path*"
     }
   ],
   "headers": [
