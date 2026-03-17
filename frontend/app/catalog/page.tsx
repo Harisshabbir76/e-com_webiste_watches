@@ -2,14 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import Container from '../components/Container';
 import ProductCard from '../components/ProductCard';
 import api from '../lib/api';
 import { Filter, ChevronDown, LayoutGrid, List } from 'lucide-react';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 type CatalogContentProps = {
   searchParams: any;
