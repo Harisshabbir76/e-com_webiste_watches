@@ -1,8 +1,16 @@
-# Fix combined-stream Module Not Found Error
+# Fix Vercel Build - useSearchParams Suspense Error
+
+## Previous Fixes ✅
+- axios ^1.7.7 → fixed combined-stream (Vercel npm install passed)
+
+## Current Issue
+❌ `useSearchParams() should be wrapped in a suspense boundary at /catalog`
 
 ## Plan Status
-✅ **Step 1:** Create this TODO.md  
-✅ **Step 2:** Update frontend/package.json (axios ^1.13.6 → ^1.7.7)  \n✅ **Step 3:** Run `cd frontend && npm install`  \n🔄 **Step 4:** Test `cd frontend && npm run build`  \n✅ **Done:** Remove this file
+✅ **Step 1:** Update TODO.md  
+🔄 **Step 2:** Refactor catalog/page.tsx (extract ClientCatalog + Suspense wrapper)  
+🔄 **Step 3:** `npm run build` local test  
+🔄 **Step 4:** Push to GitHub → Vercel auto-deploy  
+✅ **Done:** Remove this file  
 
-**Root cause:** Outdated axios 1.13.6 incompatible with Next.js 15 webpack  
-**Fix:** Update to axios 1.7.7 (stable, resolves form-data deps)
+**Root cause:** Next.js App Router requires Suspense around useSearchParams for static prerendering
