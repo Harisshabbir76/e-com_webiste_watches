@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "asynckit": "^0.5.0",
+    "combined-stream": "^1.0.8",
+    "util-deprecate": "^1.0.2"
+  }
+}

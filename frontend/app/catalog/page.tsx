@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Container from '../components/Container';
 import ProductCard from '../components/ProductCard';
 import api from '../lib/api';
-import { Filter, ChevronDown, LayoutGrid, List } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -14,16 +14,18 @@ type CatalogContentProps = {
 };
 
 const CatalogContent = ({ searchParams }: CatalogContentProps) => {
+  const searchParamsObj = useSearchParams();
+  
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // Filters
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
-  const [priceMin, setPriceMin] = useState(searchParams.get('priceMin') ? Number(searchParams.get('priceMin')) : 0);
-  const [priceMax, setPriceMax] = useState(searchParams.get('priceMax') ? Number(searchParams.get('priceMax')) : 500000);
-  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest');
-  const [strapType, setStrapType] = useState(searchParams.get('strapMaterial') || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParamsObj.get('category') || '');
+  const [priceMin, setPriceMin] = useState(searchParamsObj.get('priceMin') ? Number(searchParamsObj.get('priceMin')) : 0);
+  const [priceMax, setPriceMax] = useState(searchParamsObj.get('priceMax') ? Number(searchParamsObj.get('priceMax')) : 500000);
+  const [sortBy, setSortBy] = useState(searchParamsObj.get('sort') || 'newest');
+  const [strapType, setStrapType] = useState(searchParamsObj.get('strapMaterial') || '');
 
   useEffect(() => {
     fetchCategories();
@@ -188,7 +190,7 @@ const CatalogContent = ({ searchParams }: CatalogContentProps) => {
               <div className="h-[400px] flex flex-col items-center justify-center border border-dashed border-glass-border gap-4">
                 <p className="text-text-muted tracking-widest uppercase text-sm">No watches found in this selection</p>
                 <button 
-                  onClick={() => { setSelectedCategory(''); setStrapType(''); }}
+                  onClick={() => { setSelectedCategory(''); setStrapType(''); setPriceMin(0); setPriceMax(500000); }}
                   className="text-primary text-xs border-b border-primary pb-1"
                 >
                   CLEAR ALL FILTERS

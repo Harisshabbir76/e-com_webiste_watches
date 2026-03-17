@@ -18,8 +18,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Only allow harisshabbir17@gmail.com to access dashboard
-  if (!userInfo || userInfo.email !== 'harisshabbir17@gmail.com') {
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  if (!userInfo || userInfo.email !== adminEmail) {
     notFound();
   }
 
@@ -27,3 +27,4 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default AdminRoute;
+
