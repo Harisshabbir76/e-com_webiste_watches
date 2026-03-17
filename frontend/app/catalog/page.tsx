@@ -1,8 +1,7 @@
 import { Suspense } from 'react';
-
+import { SearchParams } from 'next/navigation';
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Container from '../components/Container';
@@ -10,12 +9,11 @@ import ProductCard from '../components/ProductCard';
 import api from '../lib/api';
 import { Filter, ChevronDown, LayoutGrid, List } from 'lucide-react';
 
-const CatalogContent = ({ searchParams }: { searchParams: any }) => {
-  const searchParamsObj = searchParams;
+type CatalogContentProps = {
+  searchParams: SearchParams;
+};
 
-
-
-  const searchParams = searchParams;
+const CatalogContent = ({ searchParams }: CatalogContentProps) => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -205,15 +203,12 @@ const CatalogContent = ({ searchParams }: { searchParams: any }) => {
         <Footer />
       </div>
     </main>
-    </Suspense>
   );
 };
 
-const Catalog = () => {
+const Catalog = ({ searchParams }: CatalogContentProps) => {
   return (
-    <Suspense fallback={<div>Loading catalog...</div>}>
-      <CatalogContent searchParams={searchParams} />
-    </Suspense>
+    <CatalogContent searchParams={searchParams} />
   );
 };
 
