@@ -55,10 +55,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-## 🔐 Admin Access
-- Email: `admin@iwrist.pk`
-- Dashboard: `/dashboard`
-- Admin email: `harisshabbir17@gmail.com`
+
 
 ## 📱 WhatsApp Integration
 - Orders auto-trigger WhatsApp messages
@@ -73,11 +70,4 @@ Images: Cloudinary
 Payments: Stripe
 ```
 
-## 🤝 Contributing
-1. Fork repo
-2. Create feature branch
-3. Commit changes
-4. Push & PR
 
-## 📄 License
-MIT
