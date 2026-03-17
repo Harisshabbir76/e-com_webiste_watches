@@ -85,8 +85,7 @@ const ProductsManagement = () => {
       description: '',
       movementType: 'Quartz',
       strapMaterial: 'Leather',
-      caseDiameter: '',
-      waterResistance: '',
+
       isFeatured: false,
       images: [''],
       variants: [
@@ -100,17 +99,17 @@ const ProductsManagement = () => {
   const handleOpenEdit = (product: any) => {
     setIsEditing(true);
     setSelectedProductId(product._id);
-      setFormData({
-        name: product.name,
-        price: product.price,
-        brand: product.brand,
-        model: product.model,
-        category: product.category?._id || product.category || '',
-        countInStock: product.countInStock,
-        description: product.description,
-        movementType: product.movementType || 'Quartz',
-        strapMaterial: product.strapMaterial || 'Leather',
-        isFeatured: product.isFeatured || false,
+    setFormData({
+      name: product.name,
+      price: product.price,
+      brand: product.brand,
+      model: product.model,
+      category: product.category?._id || product.category || '',
+      countInStock: product.countInStock,
+      description: product.description,
+      movementType: product.movementType || 'Quartz',
+      strapMaterial: product.strapMaterial || 'Leather',
+      isFeatured: product.isFeatured || false,
         images: product.images || [''],
         variants: product.variants || []
       });

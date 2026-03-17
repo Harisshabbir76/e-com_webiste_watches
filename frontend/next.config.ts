@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  turbopack: false,
+  // Turbopack disabled for Vercel compatibility
 };
 
 export default nextConfig;
