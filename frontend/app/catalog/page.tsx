@@ -9,19 +9,31 @@ import { ChevronDown } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
-const CatalogContent = () => {
-  const searchParams = useSearchParams();
-  
+interface CatalogProps {
+  initialCategory?: string;
+  initialPriceMin?: number;
+  initialPriceMax?: number;
+  initialSortBy?: string;
+  initialStrapType?: string;
+}
+
+const CatalogContent = ({ 
+  initialCategory = '', 
+  initialPriceMin = 0, 
+  initialPriceMax = 500000, 
+  initialSortBy = 'newest',
+  initialStrapType = ''
+}: CatalogProps) => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Filters
-  const [selectedCategory, setSelectedCategory] = useState(searchParams?.get("category") || "");
-  const [priceMin, setPriceMin] = useState(searchParams?.get("priceMin") ? Number(searchParams.get("priceMin")) : 0);
-  const [priceMax, setPriceMax] = useState(searchParams?.get("priceMax") ? Number(searchParams.get("priceMax")) : 500000);
-  const [sortBy, setSortBy] = useState(searchParams?.get("sort") || "newest");
-  const [strapType, setStrapType] = useState(searchParams?.get("strapMaterial") || "");
+  // Filters - use initial props for hydration match
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+  const [priceMin, setPriceMin] = useState(initialPriceMin);
+  const [priceMax, setPriceMax] = useState(initialPriceMax);
+  const [sortBy, setSortBy] = useState(initialSortBy);
+  const [strapType, setStrapType] = useState(initialStrapType);
 
   useEffect(() => {
     fetchCategories();
@@ -209,8 +221,29 @@ const CatalogContent = () => {
   );
 };
 
-const Catalog = () => {
-  return <CatalogContent />;
+const CatalogLoading = () => (
+  <div className="bg-bg-main min-h-screen pt-32">
+    <div className="max-w-7xl mx-auto px-6 py-24">
+      <div className="animate-pulse">
+        <div className="h-12 w-80 bg-glass mb-16 rounded"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="aspect-[4/5] glass rounded-lg"></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const Catalog: React.FC = () => {
+  return (
+    <Suspense fallback={<CatalogLoading />}>
+      <CatalogContent />
+    </Suspense>
+  );
 };
 
 export default Catalog;
+
+import { Suspense } from 'react';
