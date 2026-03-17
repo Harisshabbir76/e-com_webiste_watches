@@ -1,4 +1,5 @@
-'use client';
+import { Suspense } from 'react';
+
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -9,8 +10,12 @@ import ProductCard from '../components/ProductCard';
 import api from '../lib/api';
 import { Filter, ChevronDown, LayoutGrid, List } from 'lucide-react';
 
-const Catalog = () => {
-  const searchParams = useSearchParams();
+const CatalogContent = ({ searchParams }: { searchParams: any }) => {
+  const searchParamsObj = searchParams;
+
+
+
+  const searchParams = searchParams;
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -200,6 +205,15 @@ const Catalog = () => {
         <Footer />
       </div>
     </main>
+    </Suspense>
+  );
+};
+
+const Catalog = () => {
+  return (
+    <Suspense fallback={<div>Loading catalog...</div>}>
+      <CatalogContent searchParams={searchParams} />
+    </Suspense>
   );
 };
 
