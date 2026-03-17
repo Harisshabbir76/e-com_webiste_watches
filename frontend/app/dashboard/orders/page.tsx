@@ -12,7 +12,7 @@ const OrdersManagement = () => {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect() => {
+  useEffect(() => {
     fetchOrders();
   }, []);
 
