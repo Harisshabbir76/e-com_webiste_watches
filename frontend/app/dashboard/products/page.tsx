@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import AdminRoute from '../../components/AdminRoute';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../lib/api';
-import { Plus, Edit, Trash2, Search, ExternalLink, X, Image as ImageIcon, Check } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, ExternalLink, X, Image as ImageIcon, Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 const ProductsManagement = () => {
@@ -44,7 +44,7 @@ const ProductsManagement = () => {
     setLoading(true);
     try {
       const { data } = await api.get('/products');
-      setProducts(data.products);
+      setProducts(data.products || []);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -55,7 +55,7 @@ const ProductsManagement = () => {
   const fetchCategories = async () => {
     try {
       const { data } = await api.get('/categories');
-      setCategories(data);
+      setCategories(data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
@@ -85,7 +85,6 @@ const ProductsManagement = () => {
       description: '',
       movementType: 'Quartz',
       strapMaterial: 'Leather',
-
       isFeatured: false,
       images: [''],
       variants: [
@@ -110,33 +109,29 @@ const ProductsManagement = () => {
       movementType: product.movementType || 'Quartz',
       strapMaterial: product.strapMaterial || 'Leather',
       isFeatured: product.isFeatured || false,
-        images: product.images || [''],
-        variants: product.variants || []
-      });
+      images: product.images?.length ? product.images : [''],
+      variants: product.variants || []
+    });
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('FormData before clean:', JSON.stringify(formData.variants, null, 2));
     setIsSubmitting(true);
     try {
-      // Filter out empty images and variants
-      const cleanedImages = formData.images.filter(img => img.trim() !== '');
+      const cleanedImages = formData.images.filter(img => img && img.trim() !== '');
       const cleanedVariants = formData.variants
-        .filter(v => v.options.some(opt => opt.trim() !== ''))
+        .filter(v => v.options.some(opt => opt && opt.trim() !== ''))
         .map(v => ({
           variantType: v.variantType.trim() || 'Custom',
-          options: v.options.filter(opt => opt.trim() !== '')
+          options: v.options.filter(opt => opt && opt.trim() !== '')
         }));
-      console.log('cleanedVariants:', JSON.stringify(cleanedVariants, null, 2));
-        
+      
       const finalData = { 
         ...formData, 
         images: cleanedImages.length > 0 ? cleanedImages : ['/uploads/sample.jpg'],
         variants: cleanedVariants
       };
-      console.log('finalData variants:', JSON.stringify(finalData.variants, null, 2));
       
       if (isEditing) {
         await api.put(`/products/${selectedProductId}`, finalData);
@@ -153,425 +148,407 @@ const ProductsManagement = () => {
     }
   };
 
-  const handleImageChange = (index: number, value: string) => {
-    const newImages = [...formData.images];
-    newImages[index] = value;
-    setFormData({ ...formData, images: newImages });
-  };
-
-  const addImageField = () => {
-    setFormData({ ...formData, images: [...formData.images, ''] });
-  };
-
   const filteredProducts = products.filter((p: any) => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.model.toLowerCase().includes(searchTerm.toLowerCase())
+    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.model?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <AdminRoute>
       <DashboardLayout>
-        <div className="flex flex-col gap-10">
-          <div className="flex justify-between items-center">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-3xl text-white font-medium">Product Management</h1>
-              <p className="text-text-muted text-sm tracking-widest uppercase font-light">Inventory Control</p>
+        <div className="flex flex-col gap-4 xs:gap-5 sm:gap-6 md:gap-8 lg:gap-10 px-2 xs:px-3 sm:px-4 md:px-5 lg:px-6 pb-6 w-full max-w-[100vw] overflow-x-hidden">
+          
+          {/* Header - Stack on mobile, row on larger screens */}
+          <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-3 xs:gap-4">
+            <div className="flex flex-col gap-1 xs:gap-1.5 sm:gap-2">
+              <h1 className="text-xl xs:text-2xl sm:text-3xl text-white font-medium tracking-tight">
+                Product Management
+              </h1>
+              <p className="text-text-muted text-[10px] xs:text-xs sm:text-sm tracking-widest uppercase font-light">
+                Inventory Control
+              </p>
             </div>
-            <button onClick={handleOpenCreate} className="btn-premium flex items-center gap-2 text-xs">
-              <Plus size={16} />
+            <button 
+              onClick={handleOpenCreate} 
+              className="btn-premium flex items-center justify-center gap-2 text-[10px] xs:text-xs px-3 xs:px-4 py-2 xs:py-3 w-full xs:w-auto"
+            >
+              <Plus size={14} className="xs:w-4 xs:h-4" />
               ADD NEW WATCH
             </button>
           </div>
 
-          {/* Search & Stats */}
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
-              <input
-                type="text"
-                placeholder="Search inventory by name, brand, or model..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-accent border border-glass-border p-4 pl-12 text-white focus:outline-none focus:border-primary transition-all text-sm"
-              />
-            </div>
+          {/* Search Bar */}
+          <div className="relative w-full max-w-2xl">
+            <Search className="absolute left-3 xs:left-4 top-1/2 -translate-y-1/2 text-text-muted" size={16} />
+            <input
+              type="text"
+              placeholder="Search inventory by name, brand, or model..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-accent border border-glass-border p-3 xs:p-4 pl-9 xs:pl-12 text-white focus:outline-none focus:border-primary transition-all text-xs xs:text-sm rounded-lg"
+            />
           </div>
 
-          {/* Product Table */}
-          <div className="glass overflow-hidden">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-glass-border bg-white/5 uppercase text-[10px] tracking-widest text-text-muted">
-                  <th className="p-6 font-bold">Watch</th>
-                  <th className="p-6 font-bold">Category</th>
-                  <th className="p-6 font-bold">Price</th>
-                  <th className="p-6 font-bold">Stock</th>
-                  <th className="p-6 font-bold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-glass-border">
-                {loading ? (
-                  <tr><td colSpan={5} className="p-20 text-center text-primary tracking-widest uppercase animate-pulse">Synchronizing Inventory...</td></tr>
-                ) : filteredProducts.length === 0 ? (
-                  <tr><td colSpan={5} className="p-20 text-center text-text-muted tracking-widest uppercase">No timepieces found matching your criteria</td></tr>
-                ) : (
-                  filteredProducts.map((product: any) => (
-                    <tr key={product._id} className="hover:bg-white/5 transition-all group">
-                      <td className="p-6">
-                        <div className="flex items-center gap-4">
-                          <img src={product.images[0]} alt="" className="w-12 h-12 object-cover bg-black border border-glass-border" />
-                          <div className="flex flex-col">
-                            <span className="text-white text-sm font-medium">{product.name}</span>
-                            <span className="text-text-muted text-[10px] uppercase font-bold tracking-widest">{product.brand}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-6 text-sm text-text-muted uppercase tracking-widest text-[10px] font-bold">
-                        {product.category?.name || 'Uncategorized'}
-                      </td>
-                      <td className="p-6 text-sm text-white font-bold tracking-tighter">Rs. {product.price.toLocaleString()}</td>
-                      <td className="p-6">
-                        <span className={`text-[10px] font-bold px-3 py-1 uppercase tracking-widest glass ${product.countInStock > 5 ? 'text-green-500' : 'text-red-500'}`}>
-                          {product.countInStock} IN STOCK
-                        </span>
-                      </td>
-                      <td className="p-6 text-right">
-                        <div className="flex justify-end gap-3 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                          <Link href={`/catalog/${product._id}`} target="_blank" className="p-2 text-text-muted hover:text-white transition-colors" title="View in Shop">
-                            <ExternalLink size={18} />
-                          </Link>
-                          <button 
-                            onClick={() => handleOpenEdit(product)}
-                            className="p-2 text-text-muted hover:text-primary transition-colors" 
-                            title="Edit Details"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button onClick={() => deleteHandler(product._id)} className="p-2 text-text-muted hover:text-red-500 transition-colors" title="Remove Inventory">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Create/Edit Modal */}
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
-            <div className="relative w-full max-w-4xl glass p-10 flex flex-col gap-8 shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto custom-scrollbar">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-1">
-                  <h2 className="text-2xl text-white font-medium uppercase tracking-widest">{isEditing ? 'Edit Timepiece' : 'Add New Timepiece'}</h2>
-                  <span className="text-primary text-[10px] font-bold tracking-[0.3em] uppercase">{isEditing ? `REF: ${selectedProductId.slice(-8).toUpperCase()}` : 'NEW INVENTORY ENTRY'}</span>
-                </div>
-                <button onClick={() => setIsModalOpen(false)} className="text-text-muted hover:text-white transition-colors">
-                  <X size={24} />
-                </button>
+          {/* Products Grid - 2 columns on all mobile devices, 3 on tablet, 4 on desktop */}
+          <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 xs:gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+            {loading ? (
+              // Skeleton loading - 2 columns on mobile
+              Array(6).fill(0).map((_, i) => (
+                <div key={i} className="glass animate-pulse h-[200px] xs:h-[220px] sm:h-[250px] md:h-[280px] lg:h-[300px] rounded-lg"></div>
+              ))
+            ) : filteredProducts.length === 0 ? (
+              <div className="col-span-full text-center py-8 xs:py-10 sm:py-12 md:py-16 lg:py-20 text-text-muted tracking-widest uppercase text-xs xs:text-sm">
+                <Search size={32} className="mx-auto mb-3 opacity-50" />
+                No products match your search
               </div>
+            ) : (
+              filteredProducts.map((product: any) => (
+                <div key={product._id} className="glass group hover:shadow-xl transition-all overflow-hidden rounded-lg flex flex-col h-full">
+                  {/* Product Image */}
+                  <div className="relative aspect-square xs:aspect-[4/5] sm:aspect-[4/5] md:aspect-square overflow-hidden">
+                    <img 
+                      src={product.images?.[0] || '/placeholder.jpg'} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                    />
+                    
+                    {/* Hover Actions - Optimized for touch */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1.5 xs:p-2 sm:p-3">
+                      <div className="flex gap-1 w-full">
+                        <Link
+                          href={`/catalog/${product._id}`}
+                          target="_blank"
+                          className="flex-1 p-1 xs:p-1.5 sm:p-2 glass text-text-muted hover:text-white transition-all text-center rounded"
+                          title="View Live"
+                        >
+                          <ExternalLink size={10} className="mx-auto xs:w-3 xs:h-3" />
+                        </Link>
+                        <button 
+                          onClick={() => handleOpenEdit(product)}
+                          className="flex-1 p-1 xs:p-1.5 sm:p-2 glass text-text-muted hover:text-primary transition-all text-center rounded" 
+                          title="Edit"
+                        >
+                          <Edit size={10} className="mx-auto xs:w-3 xs:h-3" />
+                        </button>
+                        <button 
+                          onClick={() => deleteHandler(product._id)} 
+                          className="flex-1 p-1 xs:p-1.5 sm:p-2 glass text-text-muted hover:text-red-500 transition-all text-center rounded" 
+                          title="Delete"
+                        >
+                          <Trash2 size={10} className="mx-auto xs:w-3 xs:h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Left Column */}
-                <div className="flex flex-col gap-6">
-                   <div className="flex flex-col gap-2">
-                     <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Watch Name</label>
-                     <input
-                       required
-                       type="text"
-                       value={formData.name}
-                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                       className="w-full bg-accent border border-glass-border p-4 text-white focus:outline-none focus:border-primary transition-all text-sm uppercase"
-                       placeholder="ROLEX SUBMARINER DATE"
-                     />
-                   </div>
+                  {/* Product Info */}
+                  <div className="p-2 xs:p-2.5 sm:p-3 md:p-4 flex flex-col gap-1 flex-grow">
+                    <span className="text-primary text-[8px] xs:text-[9px] sm:text-[10px] tracking-[0.2em] uppercase font-bold truncate">
+                      {product.brand || 'BRAND'}
+                    </span>
+                    
+                    <Link href={`/catalog/${product._id}`} className="block hover:text-primary transition-colors">
+                      <h3 className="text-[10px] xs:text-xs sm:text-sm font-medium text-white line-clamp-2">
+                        {product.name || 'Product Name'}
+                      </h3>
+                    </Link>
+                    
+                    <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1 mt-auto pt-1">
+                      <span className="text-[7px] xs:text-[8px] sm:text-[9px] text-text-muted uppercase tracking-widest font-medium truncate">
+                        {product.category?.name || 'Uncategorized'}
+                      </span>
+                      <span className="text-[9px] xs:text-[10px] sm:text-xs font-bold text-white">
+                        Rs. {product.price?.toLocaleString() || 0}
+                      </span>
+                    </div>
+                    
+                    <span className={`inline-block text-[6px] xs:text-[7px] sm:text-[8px] font-bold px-1 xs:px-1.5 py-0.5 uppercase tracking-widest rounded-sm w-fit mt-1 ${
+                      product.countInStock > 5 ? 'text-green-500 bg-green-500/10' : 'text-red-500 bg-red-500/10'
+                    }`}>
+                      {product.countInStock || 0} Stock
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Brand</label>
+          {/* Create/Edit Modal */}
+          {isModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 xs:p-3 sm:p-4 md:p-6 bg-black/50 backdrop-blur-sm overflow-y-auto">
+              <div className="relative w-full max-w-4xl lg:max-w-6xl my-4 xs:my-6 glass p-3 xs:p-4 sm:p-5 md:p-6 lg:p-8 rounded-2xl shadow-2xl border border-white/10 overflow-y-auto max-h-[95vh]">
+                
+                {/* Modal Header - Sticky */}
+                <div className="flex items-center justify-between mb-4 xs:mb-5 sm:mb-6 md:mb-8 sticky top-0 bg-accent/90 backdrop-blur-sm z-10 -mt-2 pt-2 pb-2">
+                  <div className="flex flex-col gap-0.5 xs:gap-1">
+                    <h2 className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl text-white font-medium uppercase tracking-widest">
+                      {isEditing ? 'Edit Timepiece' : 'Add New Timepiece'}
+                    </h2>
+                    <span className="text-primary text-[8px] xs:text-[9px] sm:text-[10px] font-bold tracking-[0.2em] uppercase">
+                      {isEditing ? `REF: ${selectedProductId.slice(-8).toUpperCase()}` : 'NEW INVENTORY ENTRY'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="text-text-muted hover:text-white transition-colors p-1.5 xs:p-2 rounded-lg hover:bg-white/5"
+                  >
+                    <X size={16} className="xs:w-5 xs:h-5" />
+                  </button>
+                </div>
+
+                {/* Modal Form */}
+                <form onSubmit={handleSubmit} className="flex flex-col lg:grid lg:grid-cols-2 gap-4 xs:gap-5 sm:gap-6 md:gap-8">
+
+                  {/* Left Column */}
+                  <div className="flex flex-col gap-3 xs:gap-4 sm:gap-5 md:gap-6">
+
+                    {/* Watch Name */}
+                    <div className="flex flex-col gap-1 xs:gap-1.5 sm:gap-2">
+                      <label className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                        Watch Name
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full bg-accent border border-glass-border p-2 xs:p-2.5 sm:p-3 md:p-4 text-white focus:outline-none focus:border-primary transition-all text-xs xs:text-sm uppercase rounded-lg"
+                        placeholder="ROLEX SUBMARINER DATE"
+                      />
+                    </div>
+
+                    {/* Brand & Model */}
+                    <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:gap-4">
+                      <div className="flex flex-col gap-1 xs:gap-1.5 sm:gap-2">
+                        <label className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                          Brand
+                        </label>
                         <input
                           required
                           type="text"
                           value={formData.brand}
                           onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                          className="w-full bg-accent border border-glass-border p-4 text-white focus:outline-none focus:border-primary transition-all text-sm uppercase"
+                          className="w-full bg-accent border border-glass-border p-2 xs:p-2.5 sm:p-3 md:p-4 text-white focus:outline-none focus:border-primary transition-all text-xs xs:text-sm uppercase rounded-lg"
                           placeholder="ROLEX"
                         />
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Model</label>
+                      <div className="flex flex-col gap-1 xs:gap-1.5 sm:gap-2">
+                        <label className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                          Model
+                        </label>
                         <input
                           required
                           type="text"
                           value={formData.model}
                           onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                          className="w-full bg-accent border border-glass-border p-4 text-white focus:outline-none focus:border-primary transition-all text-sm uppercase"
+                          className="w-full bg-accent border border-glass-border p-2 xs:p-2.5 sm:p-3 md:p-4 text-white focus:outline-none focus:border-primary transition-all text-xs xs:text-sm uppercase rounded-lg"
                           placeholder="126610LN"
                         />
                       </div>
-                   </div>
+                    </div>
 
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Price (Rs.)</label>
+                    {/* Price & Stock */}
+                    <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:gap-4">
+                      <div className="flex flex-col gap-1 xs:gap-1.5 sm:gap-2">
+                        <label className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                          Price (Rs.)
+                        </label>
                         <input
                           required
                           type="number"
                           value={formData.price}
                           onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                          className="w-full bg-accent border border-glass-border p-4 text-white focus:outline-none focus:border-primary transition-all text-sm font-bold"
+                          className="w-full bg-accent border border-glass-border p-2 xs:p-2.5 sm:p-3 md:p-4 text-white focus:outline-none focus:border-primary transition-all text-xs xs:text-sm font-bold rounded-lg"
                         />
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Stock Count</label>
+                      <div className="flex flex-col gap-1 xs:gap-1.5 sm:gap-2">
+                        <label className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                          Stock Count
+                        </label>
                         <input
                           required
                           type="number"
                           value={formData.countInStock}
                           onChange={(e) => setFormData({ ...formData, countInStock: Number(e.target.value) })}
-                          className="w-full bg-accent border border-glass-border p-4 text-white focus:outline-none focus:border-primary transition-all text-sm"
+                          className="w-full bg-accent border border-glass-border p-2 xs:p-2.5 sm:p-3 md:p-4 text-white focus:outline-none focus:border-primary transition-all text-xs xs:text-sm rounded-lg"
                         />
                       </div>
-                   </div>
+                    </div>
 
-                   <div className="flex flex-col gap-2">
-                     <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Category</label>
-                     <select
-                       required
-                       value={formData.category}
-                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                       className="w-full bg-accent border border-glass-border p-4 text-white focus:outline-none focus:border-primary transition-all text-sm uppercase"
-                     >
-                       <option value="">Select Category</option>
-                       {categories.map((cat: any) => (
-                         <option key={cat._id} value={cat._id}>{cat.name}</option>
-                       ))}
-                     </select>
-                   </div>
+                    {/* Category */}
+                    <div className="flex flex-col gap-1 xs:gap-1.5 sm:gap-2">
+                      <label className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                        Category
+                      </label>
+                      <select
+                        required
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full bg-accent border border-glass-border p-2 xs:p-2.5 sm:p-3 md:p-4 text-white focus:outline-none focus:border-primary transition-all text-xs xs:text-sm uppercase rounded-lg"
+                      >
+                        <option value="">Select Category</option>
+                        {categories.map((cat: any) => (
+                          <option key={cat._id} value={cat._id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                   <div className="flex flex-col gap-2">
-                     <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Description</label>
-                     <textarea
-                       required
-                       rows={4}
-                       value={formData.description}
-                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                       className="w-full bg-accent border border-glass-border p-4 text-white focus:outline-none focus:border-primary transition-all text-sm resize-none"
-                       placeholder="Detailed specifications and craftsmanship details..."
-                     />
-                   </div>
-                </div>
+                    {/* Description */}
+                    <div className="flex flex-col gap-1 xs:gap-1.5 sm:gap-2">
+                      <label className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                        Description
+                      </label>
+                      <textarea
+                        required
+                        rows={3}
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="w-full bg-accent border border-glass-border p-2 xs:p-2.5 sm:p-3 md:p-4 text-white focus:outline-none focus:border-primary transition-all text-xs xs:text-sm rounded-lg resize-none"
+                        placeholder="Detailed specifications and craftsmanship details..."
+                      />
+                    </div>
 
-                {/* Right Column */}
-                <div className="flex flex-col gap-6">
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Movement</label>
+                  </div>
+
+                  {/* Right Column */}
+                  <div className="flex flex-col gap-3 xs:gap-4 sm:gap-5 md:gap-6">
+
+                    {/* Movement & Strap */}
+                    <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:gap-4">
+                      <div className="flex flex-col gap-1 xs:gap-1.5 sm:gap-2">
+                        <label className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                          Movement
+                        </label>
                         <input
                           required
                           type="text"
                           value={formData.movementType}
                           onChange={(e) => setFormData({ ...formData, movementType: e.target.value })}
-                          className="w-full bg-accent border border-glass-border p-4 text-white focus:outline-none focus:border-primary transition-all text-sm uppercase"
+                          className="w-full bg-accent border border-glass-border p-2 xs:p-2.5 sm:p-3 md:p-4 text-white focus:outline-none focus:border-primary transition-all text-xs xs:text-sm uppercase rounded-lg"
                           placeholder="AUTOMATIC"
                         />
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Strap</label>
+                      <div className="flex flex-col gap-1 xs:gap-1.5 sm:gap-2">
+                        <label className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                          Strap
+                        </label>
                         <input
                           required
                           type="text"
                           value={formData.strapMaterial}
                           onChange={(e) => setFormData({ ...formData, strapMaterial: e.target.value })}
-                          className="w-full bg-accent border border-glass-border p-4 text-white focus:outline-none focus:border-primary transition-all text-sm uppercase"
+                          className="w-full bg-accent border border-glass-border p-2 xs:p-2.5 sm:p-3 md:p-4 text-white focus:outline-none focus:border-primary transition-all text-xs xs:text-sm uppercase rounded-lg"
                           placeholder="OYSTERSTEEL"
                         />
                       </div>
-                   </div>
+                    </div>
 
-
-
-                   <div className="flex flex-col gap-4">
-                     <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Product Showcase (Images)</label>
-                     <div className="grid grid-cols-2 gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    {/* Images Section */}
+                    <div className="flex flex-col gap-2 xs:gap-3">
+                      <label className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                        Product Images
+                      </label>
+                      <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
                         {formData.images.map((img, index) => (
-                           <div key={index} className="relative group glass aspect-square flex flex-col items-center justify-center gap-2 cursor-pointer border border-glass-border hover:border-primary/50 transition-all">
-                              {img ? (
-                                <>
-                                  <img src={img} alt="" className="absolute inset-0 w-full h-full object-cover opacity-50 transition-transform duration-500 group-hover:scale-110" />
-                                  <div className="relative z-10 flex flex-col items-center gap-1">
-                                    <ImageIcon size={20} className="text-primary" />
-                                    <span className="text-[8px] text-white font-bold uppercase tracking-widest">Change</span>
-                                  </div>
-                                  <button 
-                                    type="button" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      const newImages = formData.images.filter((_, i) => i !== index);
-                                      setFormData({ ...formData, images: newImages.length > 0 ? newImages : [''] });
-                                    }}
-                                    className="absolute top-2 right-2 z-20 w-6 h-6 glass bg-red-500/20 text-red-500 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <X size={12} />
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <ImageIcon size={24} className="text-text-muted" />
-                                  <span className="text-[8px] text-text-muted font-bold uppercase tracking-widest text-center px-2">Click to Upload</span>
-                                </>
-                              )}
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if (!file) return;
-                                  
-                                  const tempImages = [...formData.images];
-                                  // Find a better way to show loading per image if needed, but for now just disable submit
-                                  setIsSubmitting(true);
-                                  
-                                  const uploadData = new FormData();
-                                  uploadData.append('image', file);
-                                  
-                                  try {
-                                    const { data } = await api.post('/upload', uploadData, {
-                                      headers: { 'Content-Type': 'multipart/form-data' }
-                                    });
-                                    tempImages[index] = data;
-                                    setFormData({ ...formData, images: tempImages });
-                                  } catch (error) {
-                                    console.error('Upload Error:', error);
-                                    alert('Failed to upload image.');
-                                  } finally {
-                                    setIsSubmitting(false);
-                                  }
-                                }}
-                                className="absolute inset-0 opacity-0 cursor-pointer"
-                              />
-                           </div>
+                          <div
+                            key={index}
+                            className="relative group aspect-square glass cursor-pointer border border-glass-border hover:border-primary rounded-lg overflow-hidden"
+                          >
+                            {img ? (
+                              <>
+                                <img src={img} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                                <button
+                                  type="button"
+                                  className="absolute top-0.5 right-0.5 z-10 w-4 h-4 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newImages = [...formData.images];
+                                    newImages.splice(index, 1);
+                                    if (newImages.length === 0) newImages.push('');
+                                    setFormData({ ...formData, images: newImages });
+                                  }}
+                                >
+                                  <X size={8} />
+                                </button>
+                              </>
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-text-muted">
+                                <ImageIcon size={12} />
+                                <span className="text-[6px] uppercase tracking-widest">Upload</span>
+                              </div>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const formDataImg = new FormData();
+                                formDataImg.append('image', file);
+                                try {
+                                  const res = await api.post('/upload', formDataImg);
+                                  const newImages = [...formData.images];
+                                  newImages[index] = res.data;
+                                  setFormData({ ...formData, images: newImages });
+                                } catch (error) {
+                                  alert('Upload failed');
+                                }
+                              }}
+                            />
+                          </div>
                         ))}
-                        <button 
-                           type="button"
-                           onClick={addImageField}
-                           className="glass aspect-square flex flex-col items-center justify-center gap-2 border border-dashed border-glass-border hover:border-primary/50 transition-all text-text-muted hover:text-primary"
-                         >
-                           <Plus size={20} />
-                           <span className="text-[8px] font-bold uppercase tracking-widest">Add Image</span>
-                         </button>
+                        <button
+                          type="button"
+                          className="glass aspect-square border-2 border-dashed border-glass-border hover:border-primary text-text-muted hover:text-primary transition-all flex flex-col items-center justify-center gap-1 rounded-lg"
+                          onClick={() => setFormData({ ...formData, images: [...formData.images, ''] })}
+                        >
+                          <Plus size={12} />
+                          <span className="text-[6px] uppercase tracking-widest font-bold">Add</span>
+                        </button>
                       </div>
-                   </div>
+                    </div>
 
-                   <div className="flex flex-col gap-4">
-                     <div className="flex justify-between items-center">
-                       <label className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Product Variants <span className="text-red-400">*</span> (type e.g. Size/Color)</label>
-                       <button 
-                         type="button"
-                         onClick={() => setFormData({ ...formData, variants: [...formData.variants, { variantType: '', options: [''] }] })}
-                         className="text-primary text-[10px] font-bold uppercase tracking-widest hover:underline"
-                       >
-                         + Add Variant
-                       </button>
-                     </div>
-                   <div className="flex flex-col gap-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                     {formData.variants.map((variant, vIndex) => (
-                       <div key={vIndex} className="glass p-4 border border-glass-border flex flex-col gap-4">
-                         <div className="flex justify-between items-center">
-                           <input
-                             type="text"
-                             placeholder="VARIANT TYPE (E.G. BAND)"
-                             value={variant.variantType}
-                             onChange={(e) => {
-                               const newVariants = [...formData.variants];
-                               newVariants[vIndex].variantType = e.target.value;
-                               setFormData({ ...formData, variants: newVariants });
-                             }}
-                             className="bg-transparent border-b border-glass-border p-1 text-white text-[10px] font-bold uppercase focus:outline-none focus:border-primary tracking-widest"
-                           />
-                           <button 
-                             type="button" 
-                             onClick={() => setFormData({ ...formData, variants: formData.variants.filter((_, i) => i !== vIndex) })}
-                             className="text-red-500 hover:text-red-400"
-                           >
-                             <Trash2 size={14} />
-                           </button>
-                         </div>
-                         
-                         <div className="flex flex-wrap gap-2">
-                           {variant.options.map((opt, oIndex) => (
-                             <div key={oIndex} className="relative group">
-                               <input
-                                 type="text"
-                                 value={opt}
-                                 onChange={(e) => {
-                                   const newVariants = [...formData.variants];
-                                   newVariants[vIndex].options[oIndex] = e.target.value;
-                                   setFormData({ ...formData, variants: newVariants });
-                                 }}
-                                 className="glass px-4 py-2 text-[10px] text-white border border-glass-border focus:border-primary uppercase min-w-[80px]"
-                                 placeholder="OPTION"
-                               />
-                               {variant.options.length > 1 && (
-                                 <button 
-                                   type="button"
-                                   onClick={() => {
-                                     const newVariants = [...formData.variants];
-                                     newVariants[vIndex].options = newVariants[vIndex].options.filter((_, i) => i !== oIndex);
-                                     setFormData({ ...formData, variants: newVariants });
-                                   }}
-                                   className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                 >
-                                   <X size={8} />
-                                 </button>
-                               )}
-                             </div>
-                           ))}
-                           <button 
-                             type="button"
-                             onClick={() => {
-                               const newVariants = [...formData.variants];
-                               newVariants[vIndex].options.push('');
-                               setFormData({ ...formData, variants: newVariants });
-                             }}
-                             className="px-4 py-2 glass border border-dashed border-glass-border text-primary text-[10px] uppercase font-bold hover:bg-white/5"
-                           >
-                             +
-                           </button>
-                         </div>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-
-                   <div className="flex items-center gap-4 py-4">
-                      <div 
+                    {/* Featured Toggle */}
+                    <div className="flex items-center gap-2 xs:gap-3 py-2 border-t border-glass-border">
+                      <div
+                        className={`relative w-9 h-5 rounded-full p-1 cursor-pointer transition-colors ${formData.isFeatured ? 'bg-primary' : 'bg-glass-border'}`}
                         onClick={() => setFormData({ ...formData, isFeatured: !formData.isFeatured })}
-                        className={`w-12 h-6 rounded-full p-1 cursor-pointer transition-colors duration-300 ${formData.isFeatured ? 'bg-primary' : 'bg-glass-border'}`}
                       >
-                        <div className={`w-4 h-4 rounded-full bg-white transition-transform duration-300 ${formData.isFeatured ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                        <div className={`absolute w-3.5 h-3.5 top-0.5 rounded-full bg-white transition-transform duration-300 ${formData.isFeatured ? 'translate-x-4' : ''}`}></div>
                       </div>
-                      <span className="text-xs text-text-muted uppercase tracking-widest font-bold">Feature in Showcase</span>
-                   </div>
+                      <span className="text-[8px] xs:text-[9px] sm:text-[10px] text-text-muted uppercase tracking-widest font-bold">
+                        Feature on Homepage
+                      </span>
+                    </div>
 
-                   <button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="btn-premium py-4 flex items-center justify-center gap-3 mt-auto"
-                   >
-                     {isSubmitting ? 'PROCESSING...' : (isEditing ? 'COMMIT CHANGES' : 'ADD TO COLLECTION')}
-                     {!isSubmitting && <Check size={18} />}
-                   </button>
-                </div>
-              </form>
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="btn-premium py-2 xs:py-2.5 sm:py-3 md:py-4 flex items-center justify-center gap-2 w-full text-xs xs:text-sm mt-2"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" />
+                          PROCESSING...
+                        </>
+                      ) : (
+                        <>
+                          {isEditing ? 'UPDATE PRODUCT' : 'ADD PRODUCT'}
+                          <Check size={14} />
+                        </>
+                      )}
+                    </button>
+
+                  </div>
+                </form>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+        </div>
       </DashboardLayout>
     </AdminRoute>
   );

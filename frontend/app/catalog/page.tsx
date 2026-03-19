@@ -183,13 +183,13 @@ const CatalogContent = ({
           {/* Product Grid */}
           <div className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div className="grid grid-cols-3 gap-6 sm:gap-8">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div key={i} className="aspect-[4/5] glass animate-pulse"></div>
                 ))}
               </div>
             ) : products.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+              <div className="grid grid-cols-3 gap-6 sm:gap-8">
                 {products.map((product: any) => (
                   <ProductCard key={product._id} product={product} />
                 ))}
@@ -226,7 +226,7 @@ const CatalogLoading = () => (
     <div className="max-w-7xl mx-auto px-6 py-24">
       <div className="animate-pulse">
         <div className="h-12 w-80 bg-glass mb-16 rounded"></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-3 gap-6 sm:gap-8">
           {[1,2,3,4,5,6].map(i => (
             <div key={i} className="aspect-[4/5] glass rounded-lg"></div>
           ))}
